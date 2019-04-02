@@ -598,6 +598,7 @@ config FSL_IMX6UL
     select SDHCI
     select USB_CHIPIDEA
     select UNIMP
+    select IBM_CFFPS
 
 config MICROBIT
     bool
