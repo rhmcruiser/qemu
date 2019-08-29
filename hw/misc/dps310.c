@@ -1,8 +1,8 @@
 /* Emulation of DPS310 temperature sensor for openbmc/qemu
  *
+ * Used tmp421.c as a reference 
  * Written by Monthero Ronald <rhmcruiser@gmail.com>
- * Inspired by tmp421 peripheral model and Andrew Jeffery
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation; either version 2 or
@@ -30,9 +30,13 @@ typedef struct DeviceInfo {
 } DeviceInfo;
 
 typedef struct DPS320State { 
+    /* < private > */
     I2CSlave i2c;
+    /* < public > */
+
     int16_t temperature[4];
-    
+    int16_t pressure;  /* Added */
+
     uint8_t status;
     uint8_t config[2];
     uint8_t rate;
@@ -40,11 +44,14 @@ typedef struct DPS320State {
     uint8_t len;
     uint8_t buf[2];
     uint8_t pointer;
+
+   /* To add pressure sensor required variables */
+   /* ...  */
 } DPS320State;
 
 typedef struct DPS320Class {
-    
     I2CSlaveClass parent_class;
+    
     DeviceInfo *dev;
 } DPS320Class;
 
@@ -216,6 +223,7 @@ static void dps310_get_temperature(Object *obj, Visitor *v, const char *name,
         error_setg(errp, "error reading %s: %m", name);
         return;
     }
+
    
     if (tempid >= 3 || tempid < 0) {
         error_setg(errp, "error reading %s", name);
