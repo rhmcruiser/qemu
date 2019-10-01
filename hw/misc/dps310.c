@@ -1,7 +1,8 @@
 /* Emulation of DPS310 temperature sensor for openbmc/qemu
  *
- * Used tmp421.c as a reference 
+ * 
  * Written by Monthero Ronald <rhmcruiser@gmail.com>
+ * Used tmp421.c as a reference and inspired by Andrew Jeffery 
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
