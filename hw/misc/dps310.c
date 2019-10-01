@@ -19,6 +19,9 @@
  * 
  * */
 
+
+
+
 #include "qemu/osdep.h"
 #include "hw/hw.h"
 #include "hw/i2c/i2c.h"
@@ -30,7 +33,7 @@ typedef struct DeviceInfo {
     const char *name;
 } DeviceInfo;
 
-typedef struct DPS320State { 
+typedef struct DPS310State {
     /* < private > */
     I2CSlave i2c;
     /* < public > */
@@ -48,37 +51,39 @@ typedef struct DPS320State {
 
    /* To add pressure sensor required variables */
    /* ...  */
-} DPS320State;
+} DPS310State;
 
-typedef struct DPS320Class {
+typedef struct DPS310Class {
     I2CSlaveClass parent_class;
-    
+
     DeviceInfo *dev;
-} DPS320Class;
+} DPS310Class;
 
-#define TYPE_DPS320 "dps320-generic"
-#define DPS320(obj) OBJECT_CHECK(DPS320State, (obj), TYPE_DPS320)
+#define TYPE_DPS310 "dps320-generic"
+#define DPS310(obj) OBJECT_CHECK(DPS310State, (obj), TYPE_DPS310)
 
-#define DPS320_CLASS(class) \
-    OBJECT_CLASS_CHECK(DPS320Class, (class), TYPE_DPS320)
-#define DPS320_GET_CLASS(obj) \
-    OBJECT_GET_CLASS(TMP320Class, (obj), TYPE_DPS320)
+#define DPS310_CLASS(class) \
+    OBJECT_CLASS_CHECK(DPS310Class, (class), TYPE_DPS310)
+#define DPS310_GET_CLASS(obj) \
+    OBJECT_GET_CLASS(DPS310Class, (obj), TYPE_DPS310)
 
 
-/* DPS320 registers */
-#define	  DPS310_MANUFACTURER_ID_REG  0x0D
-#define   #define DPS310_DEVICE_ID    0x10   /* Value on reset at address DPS310_MANUFACTURER_ID_REG 0x0D */
+/* DPS310 registers */
+#define   DPS310_MANUFACTURER_ID_REG  0x0D
+#define DPS310_DEVICE_ID    0x10   /* Value on reset at address DPS310_MANUFACTURER_ID_REG 0x0D */
+
+static const DeviceInfo device = { DPS310_DEVICE_ID, "dps310"};
 
 /* STATUS REGISTER - Sensor Operating Mode and Status */
 
 #define DPS310_MEAS_CFG               0x08
-#define   DPS310_COEF_RDY	        (1 << 7)
-#define   DPS310_SENSOR_RDY		(1 << 6)
-#define   DPS310_TMP_RDY		(1 << 5)
-#define   DPS310_PRS_RDY		(1 << 4)
-#define   DPS310_MEAS_CRTL_standby	 0x00
-#define   DPS310_MEAS_CRTL_pressure 	(1 << 1)
-#define   DPS310_MEAS_CRTL_temp		(1 << 2)
+#define   DPS310_COEF_RDY               (1 << 7)
+#define   DPS310_SENSOR_RDY             (1 << 6)
+#define   DPS310_TMP_RDY                (1 << 5)
+#define   DPS310_PRS_RDY                (1 << 4)
+#define   DPS310_MEAS_CRTL_standby       0x00
+#define   DPS310_MEAS_CRTL_pressure     (1 << 1)
+#define   DPS310_MEAS_CRTL_temp         (1 << 2)
 
 /*  
  * MEAS_CTRL  bits used are 2, 1, 0  rw Set measurement mode and type:
@@ -133,18 +138,17 @@ SPI_MODE 0 rw Set SPI mode:
 1 - 3-wire interface.
 */
 
-#define   DPS310_CFG_REG		0X09	
+#define   DPS310_CFG_REG                0X09    
 #define     DPS310_CFG_REG_int_hl         (1 << 7)
-#define     DPS310_CFG_REG_int_fifo       (1 << 6)		
-#define	    DPS310_CFG_REG_int_tmp	  (1 << 5)
-#define     DPS310_CFG_REG_int_prs	  (1 << 4)
-#define     DPS310_CFG_REG_t_shift	  (1 << 3) 
-#define     DPS310_CFG_REG_p_shift	  (1 << 2) 
-#define     DPS310_CFG_REG_fifo_en	  (1 << 1)
+#define     DPS310_CFG_REG_int_fifo       (1 << 6)              
+#define     DPS310_CFG_REG_int_tmp        (1 << 5)
+#define     DPS310_CFG_REG_int_prs        (1 << 4)
+#define     DPS310_CFG_REG_t_shift        (1 << 3) 
+#define     DPS310_CFG_REG_p_shift        (1 << 2) 
+#define     DPS310_CFG_REG_fifo_en        (1 << 1)
 
 #define     DPS310_CFG_REG_spi_mode_4wire  0x0
 #define     DPS310_CFG_REG_spi_mode_3wire  0x1
-
 
 /* Interrupt Status (INT_STS) register
 
@@ -160,10 +164,10 @@ INT_PRS 0 r Status of pressure measurement interrupt
 0 - Interrupt not active
 1 - Interrupt active
 */
-#define     DPS310_INT_STS			0x0A
+#define     DPS310_INT_STS                      0x0A
 #define       DPS310_INT_STS_int_fifo_full        (1 << 2)
-#define       DPS310_INT_STS_int_tmp		  (1 << 1)
-#define       DPS310_INT_STS_int_prs		  (1 << 0)
+#define       DPS310_INT_STS_int_tmp              (1 << 1)
+#define       DPS310_INT_STS_int_prs              (1 << 0)
 
 
 /* FIFO Status (FIFO_STS) register 
@@ -176,10 +180,9 @@ INT_PRS 0 r Status of pressure measurement interrupt
  *   0 - The FIFO is not empty
  *   1 - The FIFO is empty
  */
-#define     DPS310_FIFO_STS			0X0B
+#define     DPS310_FIFO_STS                     0X0B
 #define       DPS310_FIFO_STS_fifo_full           (1 << 1)
 #define       DPS310_FIFO_STS_fifo_empty          (1 << 0)
-
 
 /*  Soft Reset and FIFO flush (RESET) register 
  *
@@ -203,20 +206,25 @@ INT_PRS 0 r Status of pressure measurement interrupt
  * 1 - External temperature sensor (of pressure sensor MEMS
  * element)
  */
-#define     DPS310_TMP_COEF_SRCE		0x28
-#define       DPS310_TMP_COEF_SRCE_external	   0x01
-#define       DPS310_TMP_COEF_SRCE_internal	   0x00
+#define    DPS310_TMP_COEF_SRCE         0x28
+#define       DPS310_TMP_COEF_SRCE_external        0x01
+#define       DPS310_TMP_COEF_SRCE_internal        0x00
+
+#define    DPS310_TMP_MSB0      0x00
+#define    DPS310_TMP_MSB1      0x01
+#define    DPS310_TMP_LSB0      0x10    
+#define    DPS310_TMP_LSB1      0x11
 
 /* Temperature range is -40 to +85 °C */
-static const int32_t temp_min = -40000;
-static const int32_t temp_max =  85000;
+static const int32_t mins[2] = {-40000, -55000};
+static const int32_t maxs[2] =  {85000, 85000};
 
 static void dps310_get_temperature(Object *obj, Visitor *v, const char *name,
-				   void *opaque, Error **errp)
+                                   void *opaque, Error **errp)
 {
-    DPS321State *s = DPS310(obj);
-    bool temp_range = (s->config[0] & DPS310_CONFIG_RANGE);
-    /* int offset = ext_range * 64 * 256;  Revisit if to select mode of temp & pressure */
+    DPS310State *s = DPS310(obj);
+    bool temp_range = (s->config[0] & DPS310_MEAS_CFG);
+    int offset = temp_range * 64 * 256; /* Revisit if to select mode of temp & pressure */
     int64_t value;
     int tempid;
 
@@ -225,63 +233,125 @@ static void dps310_get_temperature(Object *obj, Visitor *v, const char *name,
         return;
     }
 
-   
+
     if (tempid >= 3 || tempid < 0) {
         error_setg(errp, "error reading %s", name);
         return;
     }
 
-    /* Resolution scaling */ 
-    value = ((s->temperature[tempid]) * 1000 + 128) / 256;
+    /* Resolution scaling */
+    value = ((s->temperature[tempid] - offset) * 1000 + 128) / 256;
 
     visit_type_int(v, name, &value, errp);
+}
+
+/*
+  Units are 0.001 centigrades relative to 0 C.  s->temperature is 8.8
+  fixed point, so units are 1/256 centigrades.  A simple ratio will do.
+ */
+
+static void dps310_set_temperature(Object *obj, Visitor *v, const char *name,
+                                   void *opaque, Error **errp)
+{
+    DPS310State *s = DPS310(obj);
+    Error *local_err = NULL;
+    int64_t temp;
+    bool ext_range = (s->config[0] & DPS310_MEAS_CFG);
+    int offset = ext_range * 64 * 256;
+    int tempid;
+
+    visit_type_int(v, name, &temp, &local_err);
+    if (local_err) {
+        error_propagate(errp, local_err);
+        return;
+    }
+
+    if (temp >= maxs[ext_range] || temp < mins[ext_range]) {
+        error_setg(errp, "value %" PRId64 ".%03" PRIu64 " C is out of range",
+                   temp / 1000, temp % 1000);
+        return;
+    }
+
+    if (sscanf(name, "temperature%d", &tempid) != 1) {
+        error_setg(errp, "error reading %s: %m", name);
+        return;
+    }
+
+    if (tempid >= 4 || tempid < 0) {
+        error_setg(errp, "error reading %s", name);
+        return;
+    }
+
+    s->temperature[tempid] = (int16_t) ((temp * 256 - 128) / 1000) + offset;
 }
 
 static void dps310_read(DPS310State *s)
 {
     DPS310Class *sc = DPS310_GET_CLASS(s);
-
     s->len = 0;
 
     switch (s->pointer) {
     case DPS310_MANUFACTURER_ID_REG:
-        s->buf[s->len++] = DPS310_MANUFACTURER_ID;
-        break;
+         s->buf[s->len++] = sc->dev->model;
+         break;
     case DPS310_CFG_REG:
         s->buf[s->len++] = s->config[0];
         s->buf[s->len++] = s->config[1];
         break;
-    case DPS310_TMP_CFG:
+    case DPS310_TMP_COEF_SRCE:
         s->buf[s->len++] = s->rate;
         break;
     case DPS310_MEAS_CFG:
         s->buf[s->len++] = s->status;
-        break
+        break;
 
 /* FIXME: check for channel enablement in config registers */
-    case DPS310_TMP_B1_MSB:
+    case DPS310_TMP_MSB1:
         s->buf[s->len++] = (((uint16_t) s->temperature[0]) >> 8);
         s->buf[s->len++] = (((uint16_t) s->temperature[0]) >> 0) & 0xf0;
         break;
-    case DPS310_TMP_B0_MSB:
+    case DPS310_TMP_MSB0:
         s->buf[s->len++] = (((uint16_t) s->temperature[1]) >> 8);
         s->buf[s->len++] = (((uint16_t) s->temperature[1]) >> 0) & 0xf0;
         break;
-    case DPS310_TMP_B1_LSB:
+    case DPS310_TMP_LSB1:
         s->buf[s->len++] = (((uint16_t) s->temperature[0]) >> 0) & 0xf0;
         break;
-    case DPS310_TMP_B0_LSB:
+    case DPS310_TMP_LSB0:
         s->buf[s->len++] = (((uint16_t) s->temperature[1]) >> 0) & 0xf0;
         break;
     }
 }
 
-static void dps310_reset(I2CSlave *i2c);
+static void dps310_reset(I2CSlave *i2c)
+{
+    DPS310State *s = DPS310(i2c);
+    DPS310Class *sc = DPS310_GET_CLASS(s);
+
+    sc->dev->model = DPS310_DEVICE_ID;
+    memset(s->temperature, 0, sizeof(s->temperature));
+    s->pointer = 0;
+
+    s->config[0] = 0;
+    s->config[1] = 0x1c; /* FIXME: revist to check if needed to be proper init value */
+
+
+    s->rate = 0x7;       /* 8Hz */  /* FIXME: check init value for rate setting */
+    s->status = 0;
+}
+
+static void dps310_realize(DeviceState *dev, Error **errp)
+{
+    DPS310State *s = DPS310(dev);
+
+    dps310_reset(&s->i2c);
+}
+
 
 static void dps310_write(DPS310State *s)
 {
     switch (s->pointer) {
-    case DPS310_TMP_CFG:
+    case DPS310_TMP_COEF_SRCE:
         s->rate = s->buf[0];
         break;
     case DPS310_CFG_REG:
@@ -347,30 +417,7 @@ static const VMStateDescription vmstate_dps310 = {
         VMSTATE_I2C_SLAVE(i2c, DPS310State),
         VMSTATE_END_OF_LIST()
     }
-}
-
-static void dps310_reset(I2CSlave *i2c)
-{
-    DPS310State *s = DPS310(i2c);
-    DPS310Class *sc = DPS310_GET_CLASS(s);
-
-    memset(s->temperature, 0, sizeof(s->temperature));
-    s->pointer = 0;
-
-    s->config[0] = 0; 
-    s->config[1] = 0x1c; /* FIXME: revist to check if needed to be proper init value */
-
-
-    s->rate = 0x7;       /* 8Hz */  /* FIXME: check init value for rate setting */
-    s->status = 0;
-}
-
-static void dps310_realize(DeviceState *dev, Error **errp)
-{
-    DPS310State *s = DPS310(dev);
-
-    dps310_reset(&s->i2c);
-}
+};
 
 static void dps310_initfn(Object *obj)
 {
@@ -412,18 +459,14 @@ static const TypeInfo dps310_info = {
 
 static void dps310_register_types(void)
 {
-    int i;
-
     type_register_static(&dps310_info);
-    for (i = 0; i < ARRAY_SIZE(devices); ++i) {
         TypeInfo ti = {
-            .name       = devices[i].name,
-            .parent     = TYPE_TMP421,
+            .name       = device.name,
+            .parent     = TYPE_DPS310,
             .class_init = dps310_class_init,
-            .class_data = (void *) &devices[i],
+            .class_data = (void *) &device,
         };
         type_register(&ti);
     }
-}
 
 type_init(dps310_register_types)
