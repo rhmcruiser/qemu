@@ -322,9 +322,9 @@ static void dps310_read(DPS310State *s)
 static void dps310_reset(I2CSlave *i2c)
 {
     DPS310State *s = DPS310(i2c);
-    DPS310Class *sc = DPS310_GET_CLASS(s);
-
-    sc->dev->model = DPS310_DEVICE_ID;
+    DPS310Class *sc = malloc(sizeof(struct DPS310Class *));
+    sc = DPS310_GET_CLASS(s);
+    
     memset(s->temperature, 0, sizeof(s->temperature));
     s->pointer = 0;
 
