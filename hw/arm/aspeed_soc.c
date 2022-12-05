@@ -235,6 +235,8 @@ static void aspeed_soc_init(Object *obj)
 
     object_initialize_child(obj, "iomem", &s->iomem, TYPE_UNIMPLEMENTED_DEVICE);
     object_initialize_child(obj, "video", &s->video, TYPE_UNIMPLEMENTED_DEVICE);
+
+    object_initialize_child(obj, "pwm", &s->pwm, TYPE_ASPEED_PWM);
 }
 
 static void aspeed_soc_realize(DeviceState *dev, Error **errp)
@@ -482,7 +484,16 @@ static void aspeed_soc_realize(DeviceState *dev, Error **errp)
                     sc->memmap[ASPEED_DEV_HACE]);
     sysbus_connect_irq(SYS_BUS_DEVICE(&s->hace), 0,
                        aspeed_soc_get_irq(s, ASPEED_DEV_HACE));
+
+    /* PWM */
+    if (!sysbus_realize(SYS_BUS_DEVICE(&s->pwm), errp)) {
+        return;
+    }
+    aspeed_mmio_map(s, SYS_BUS_DEVICE(&s->pwm), 0, sc->memmap[ASPEED_DEV_PWM]);
+    sysbus_connect_irq(SYS_BUS_DEVICE(&s->pwm), 0,
+                       aspeed_soc_get_irq(s, ASPEED_DEV_PWM));
 }
+
 static Property aspeed_soc_properties[] = {
     DEFINE_PROP_LINK("memory", AspeedSoCState, memory, TYPE_MEMORY_REGION,
                      MemoryRegion *),
